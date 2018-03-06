@@ -1,53 +1,93 @@
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-import dicom
+# import dicom
 import os
 import scipy.ndimage
 import matplotlib.pyplot as plt
 
 from skimage import measure, morphology
+import SimpleITK as sitk
 
 
+# def load_scan(path):
+#     slices = [dicom.read_file(path + '/' + s, force=True) for s in os.listdir(path)]
+#     slices.sort(key = lambda x: float(x.ImagePositionPatient[2]))
+#     if slices[0].ImagePositionPatient[2] == slices[1].ImagePositionPatient[2]:
+#         sec_num = 2;
+#         while slices[0].ImagePositionPatient[2] == slices[sec_num].ImagePositionPatient[2]:
+#             sec_num = sec_num+1;
+#         slice_num = int(len(slices) / sec_num)
+#         slices.sort(key = lambda x:float(x.InstanceNumber))
+#         slices = slices[0:slice_num]
+#         slices.sort(key = lambda x:float(x.ImagePositionPatient[2]))
+#     try:
+#         slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
+#     except:
+#         slice_thickness = np.abs(slices[0].SliceLocation - slices[1].SliceLocation)
+        
+#     for s in slices:
+#         s.SliceThickness = slice_thickness
+        
+#     return slices
+
+# def get_pixels_hu(slices):
+#     image = np.stack([s.pixel_array for s in slices])
+#     # Convert to int16 (from sometimes int16), 
+#     # should be possible as values should always be low enough (<32k)
+#     image = image.astype(np.int16)
+    
+#     # Convert to Hounsfield units (HU)
+#     for slice_number in range(len(slices)):        
+#         intercept = slices[slice_number].RescaleIntercept
+#         slope = slices[slice_number].RescaleSlope
+        
+#         if slope != 1:
+#             image[slice_number] = slope * image[slice_number].astype(np.float64)
+#             image[slice_number] = image[slice_number].astype(np.int16)
+            
+#         image[slice_number] += np.int16(intercept)
+    
+#     return np.array(image, dtype=np.int16), np.array([slices[0].SliceThickness] + slices[0].PixelSpacing, dtype=np.float32)
 
 def load_scan(path):
-    slices = [dicom.read_file(path + '/' + s) for s in os.listdir(path)]
-    slices.sort(key = lambda x: float(x.ImagePositionPatient[2]))
-    if slices[0].ImagePositionPatient[2] == slices[1].ImagePositionPatient[2]:
-        sec_num = 2;
-        while slices[0].ImagePositionPatient[2] == slices[sec_num].ImagePositionPatient[2]:
-            sec_num = sec_num+1;
-        slice_num = int(len(slices) / sec_num)
-        slices.sort(key = lambda x:float(x.InstanceNumber))
-        slices = slices[0:slice_num]
-        slices.sort(key = lambda x:float(x.ImagePositionPatient[2]))
-    try:
-        slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
-    except:
-        slice_thickness = np.abs(slices[0].SliceLocation - slices[1].SliceLocation)
-        
-    for s in slices:
-        s.SliceThickness = slice_thickness
-        
-    return slices
+    series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(path)
 
-def get_pixels_hu(slices):
-    image = np.stack([s.pixel_array for s in slices])
-    # Convert to int16 (from sometimes int16), 
+    if not series_IDs:
+        raise IOError("ERROR: given directory \"" + path + "\" does not contain a DICOM series.")
+        # print("ERROR: given directory \"" + path + "\" does not contain a DICOM series.")
+        return False
+
+    # series_file_names = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(path, series_IDs[0])
+    # instead of loading series 0, loop thru all dicom series, read the series with the most files
+    series_reader = sitk.ImageSeriesReader()
+
+    seriesUID = series_IDs[0]
+    series_file_names = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(path, seriesUID)
+    longest_serie_names = len(series_file_names)
+    # print ('path ', path, ' ,longest number of serie is ', longest_serie_names)
+    for serie in series_IDs:
+        # Get the dicom filename corresponding to the current serie
+        serie_names = series_reader.GetGDCMSeriesFileNames(path, serie)
+        if (len(serie_names) > longest_serie_names):
+            longest_serie_names = len(serie_names)
+            series_file_names = serie_names
+            seriesUID = serie
+            print ('seriesUID: ', seriesUID)
+            #print ('longest number of serie changed to: ', longest_serie_names)
+
+    series_reader.SetFileNames(series_file_names)
+
+    # series_reader.MetaDataDictionaryArrayUpdateOn()
+    # series_reader.LoadPrivateTagsOn()
+    image = series_reader.Execute()
+    return image, seriesUID
+
+def get_pixels_hu(itk_img):
+    # Convert to int16 (from sometimes int16),
     # should be possible as values should always be low enough (<32k)
-    image = image.astype(np.int16)
-    
-    # Convert to Hounsfield units (HU)
-    for slice_number in range(len(slices)):        
-        intercept = slices[slice_number].RescaleIntercept
-        slope = slices[slice_number].RescaleSlope
-        
-        if slope != 1:
-            image[slice_number] = slope * image[slice_number].astype(np.float64)
-            image[slice_number] = image[slice_number].astype(np.int16)
-            
-        image[slice_number] += np.int16(intercept)
-    
-    return np.array(image, dtype=np.int16), np.array([slices[0].SliceThickness] + slices[0].PixelSpacing, dtype=np.float32)
+    image = sitk.GetArrayFromImage(itk_img).astype(np.int16)
+    return image, itk_img.GetOrigin(), itk_img.GetDirection(), itk_img.GetSpacing(),
+
 
 def binarize_per_slice(image, spacing, intensity_th=-600, sigma=1, area_th=30, eccen_th=0.99, bg_patch_size=10):
     bw = np.zeros(image.shape, dtype=bool)
@@ -94,8 +134,10 @@ def all_slice_analysis(bw, spacing, cut_num=0, vol_limit=[0.68, 8.2], area_th=6e
         
     # select components based on volume
     properties = measure.regionprops(label)
+    voxel_size = spacing[0]*spacing[1]*spacing[2]
+
     for prop in properties:
-        if prop.area * spacing.prod() < vol_limit[0] * 1e6 or prop.area * spacing.prod() > vol_limit[1] * 1e6:
+        if prop.area * voxel_size < vol_limit[0] * 1e6 or prop.area * voxel_size > vol_limit[1] * 1e6:
             label[label == prop.label] = 0
             
     # prepare a distance map for further analysis
@@ -226,13 +268,21 @@ def two_lung_only(bw, spacing, max_iter=22, max_ratio=4.8):
     return bw1, bw2, bw
 
 def step1_python(case_path):
-    case = load_scan(case_path)
-    case_pixels, spacing = get_pixels_hu(case)
+    # case = load_scan(case_path)
+    # case_pixels, spacing = get_pixels_hu(case)
+    img, seriesUID = load_scan(case_path)
+    if (img is False):
+        print ('img is False!')
+        return False, 0, 0, 0, 0, 0
+    
+    case_pixels, origin, direction, spacing = get_pixels_hu(img)
     bw = binarize_per_slice(case_pixels, spacing)
+
     flag = 0
     cut_num = 0
     cut_step = 2
     bw0 = np.copy(bw)
+
     while flag == 0 and cut_num < bw.shape[0]:
         bw = np.copy(bw0)
         bw, flag = all_slice_analysis(bw, spacing, cut_num=cut_num, vol_limit=[0.68,7.5])
