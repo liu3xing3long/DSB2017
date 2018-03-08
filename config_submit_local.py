@@ -1,6 +1,6 @@
-config = {'datapath':'/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess/rawdata/',
+config = {'datapath':'/home/liuxinglong/data/ISBI/isbi_preprocess/rawdata/',
           'preprocess_result_path':'./prep_result/',
-          'outputfile':'./prediction.csv',
+          'outputfile':'prediction.csv',
           
           'detector_model':'net_detector',
          'detector_param':'./model/detector.ckpt',
@@ -10,5 +10,4 @@ config = {'datapath':'/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess/rawdata/
          'n_worker_preprocessing':4,
          'use_exsiting_preprocessing':True,
          'skip_preprocessing':True,
-         'skip_detect':True,
-          'feature_path': './features/'}
+         'skip_detect':True}

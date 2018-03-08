@@ -2,3 +2,9 @@
 *.ipynb*
 training/.flag*
 prediction*.csv
+
+\.idea/
+
+\.vscode/
+
+features/

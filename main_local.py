@@ -1,5 +1,5 @@
 from preprocessing import full_prep
-from config_submit import config as config_submit
+from config_submit_local import config as config_submit
 
 import torch
 from torch.nn import DataParallel
@@ -23,7 +23,6 @@ prep_result_path = config_submit['preprocess_result_path']
 skip_prep = config_submit['skip_preprocessing']
 skip_detect = config_submit['skip_detect']
 bbox_result_path = './bbox_result'
-feature_path = config_submit['feature_path']
 
 if not skip_prep:
     testsplit = full_prep(datapath,prep_result_path,
@@ -83,28 +82,16 @@ def test_casenet(model,testset):
     #model = model.cuda()
     model.eval()
     predlist = []
-
+    
     #     weight = torch.from_numpy(np.ones_like(y).float().cuda()
     for i,(x,coord) in enumerate(data_loader):
-        ################################
-        data_name = testset.filenames[i]
-        idxtoken1 = data_name.rindex("/")
-        idxtoken2 = data_name.rindex("_")
-        data_name = data_name[idxtoken1 + 1:idxtoken2]
-        print "processing {}".format(data_name)
-        ################################
+
         coord = Variable(coord).cuda()
         x = Variable(x).cuda()
-        nodulePred, casePred, _, noduleFeat, centerFeat = model(x,coord)
+        nodulePred,casePred,_ = model(x,coord)
         # print "data {}, nod {}, case {}".format(i, nodulePred, casePred)
         predlist.append(casePred.data.cpu().numpy())
         #print([i,data_loader.dataset.split[i,1],casePred.data.cpu().numpy()])
-        feat_shape = centerFeat.size()
-        centerFeat = centerFeat.view(feat_shape[0] * feat_shape[1], -1)
-
-        ################################
-        np.save(os.path.join(feature_path, data_name + "_feat.npy"), centerFeat.data.cpu().numpy())
-
     predlist = np.concatenate(predlist)
     return predlist    
 config2['bboxpath'] = bbox_result_path

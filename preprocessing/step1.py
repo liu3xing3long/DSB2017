@@ -86,7 +86,11 @@ def get_pixels_hu(itk_img):
     # Convert to int16 (from sometimes int16),
     # should be possible as values should always be low enough (<32k)
     image = sitk.GetArrayFromImage(itk_img).astype(np.int16)
-    return image, itk_img.GetOrigin(), itk_img.GetDirection(), itk_img.GetSpacing(),
+    numpyOrigin = np.array(list(reversed(itk_img.GetOrigin())))
+    numpySpacing = np.array(list(reversed(itk_img.GetSpacing())))
+    numpyDirection = np.array(list(reversed(itk_img.GetDirection())))
+
+    return image, numpyOrigin, numpyDirection, numpySpacing
 
 
 def binarize_per_slice(image, spacing, intensity_th=-600, sigma=1, area_th=30, eccen_th=0.99, bg_patch_size=10):
@@ -276,7 +280,9 @@ def step1_python(case_path):
         return False, 0, 0, 0, 0, 0
     
     case_pixels, origin, direction, spacing = get_pixels_hu(img)
+
     bw = binarize_per_slice(case_pixels, spacing)
+    print "binarize done !"
 
     flag = 0
     cut_num = 0
@@ -287,9 +293,14 @@ def step1_python(case_path):
         bw = np.copy(bw0)
         bw, flag = all_slice_analysis(bw, spacing, cut_num=cut_num, vol_limit=[0.68,7.5])
         cut_num = cut_num + cut_step
+    print "all slice analysis done !"
 
     bw = fill_hole(bw)
+    print "fill  hole done!"
+
     bw1, bw2, bw = two_lung_only(bw, spacing)
+    print "two lung done!"
+    
     return case_pixels, bw1, bw2, spacing
     
 if __name__ == '__main__':

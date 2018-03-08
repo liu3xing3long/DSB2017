@@ -30,7 +30,6 @@ config['isScale'] = True
 
 config['random_sample'] = True
 config['T'] = 1
-config['topk'] = 5
 config['stride'] = 4
 config['augtype'] = {'flip':True,'swap':False,'rotate':False,'scale':False}
 
@@ -160,6 +159,7 @@ class CaseNet(nn.Module):
         nodulePred = nodulePred.contiguous().view(corrdsize[0],corrdsize[1],-1)
         
         featshape = noduleFeat.size()#nk x 128 x 24 x 24 x24
+        # print "feature shape {}".format(featshape)
         centerFeat = self.pool(noduleFeat[:,:,featshape[2]/2-1:featshape[2]/2+1,
                                           featshape[3]/2-1:featshape[3]/2+1,
                                           featshape[4]/2-1:featshape[4]/2+1])
@@ -169,5 +169,10 @@ class CaseNet(nn.Module):
         out = torch.sigmoid(self.fc2(out))
         out = out.view(xsize[0],xsize[1])
         base_prob = torch.sigmoid(self.baseline)
-        casePred = 1-torch.prod(1-out,dim=1)*(1-base_prob.expand(out.size()[0]))
-        return nodulePred,casePred,out
+
+        valid_nod_prob = torch.prod(1-out,dim=1)
+        dummy_nod_prob = (1-base_prob.expand(out.size()[0]))
+        casePred = 1- valid_nod_prob * dummy_nod_prob
+        # print "otuput {}".format(out)
+
+        return nodulePred, casePred, out, noduleFeat, centerFeat
