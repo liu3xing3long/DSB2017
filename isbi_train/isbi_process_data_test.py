@@ -11,10 +11,11 @@ import pandas as pd
 import SimpleITK as sitk
 import numpy as np
 
-isbi_csv_file = "labels_isbi.csv"
-isbi_image_path = "/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess/image"
-prep_folder = "./prep_result"
-bbox_folder = "./bbox_result"
+isbi_csv_file = "./data/labels_isbi_test.csv"
+
+isbi_image_path = "/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess_test/image"
+prep_folder = "../prep_result"
+bbox_folder = "../bbox_result"
 
 
 def debugmsg(msg):

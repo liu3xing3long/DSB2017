@@ -99,8 +99,8 @@ def test_casenet(model,testset):
         # print "data {}, nod {}, case {}".format(i, nodulePred, casePred)
         predlist.append(casePred.data.cpu().numpy())
         #print([i,data_loader.dataset.split[i,1],casePred.data.cpu().numpy()])
-        feat_shape = centerFeat.size()
-        centerFeat = centerFeat.view(feat_shape[0] * feat_shape[1], -1)
+        # feat_shape = centerFeat.size()
+        # centerFeat = centerFeat.view(feat_shape[0] * feat_shape[1], -1)
 
         ################################
         np.save(os.path.join(feature_path, data_name + "_feat.npy"), centerFeat.data.cpu().numpy())

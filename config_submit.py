@@ -11,4 +11,4 @@ config = {'datapath':'/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess/rawdata/
          'use_exsiting_preprocessing':True,
          'skip_preprocessing':True,
          'skip_detect':True,
-          'feature_path': './features/'}
+         'feature_path': './features/'}

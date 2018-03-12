@@ -8,3 +8,6 @@ prediction*.csv
 \.vscode/
 
 features/
+isbi_train/results/base-20180312-174351-auc1-fpr1-tpr1/
+
+isbi_train/results/base-20180312-182704/

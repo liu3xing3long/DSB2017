@@ -53,7 +53,7 @@ def import_data():
     for idx, item in orig_labels.iterrows():
         item_id = str(item["ID"])
         dat = np.load(os.path.join(dsb2017featfullpath, "{}_feat.npy".format(item_id)))
-        X.append(dat[:, 0])
+        X.append(dat)
         Y.append(item["Type"])
 
     X = np.array(X)
@@ -76,8 +76,6 @@ def split_data(X, Y, X_delta, Y_delta, valcount=3):
     delta_rand_val = np.array(list(delta_rand_val))
     delta_rand_train = np.array(list(delta_rand_train))
 
-    print "SINGLE: train idx {}, val idx {}".format(delta_rand_train, delta_rand_val)
-
     # Xt_delta_train = X_delta[delta_rand_train, :]
     # Xt_delta_val = X_delta[delta_rand_val, :]
     # Yt_delta_train = Y_delta[delta_rand_train]
@@ -93,17 +91,20 @@ def split_data(X, Y, X_delta, Y_delta, valcount=3):
     print X_delta.shape, Y_delta.shape
 
     for idx_train in delta_rand_train:
-        X_final_train.append(np.concatenate((X[idx_train * pair_cnt, :], X[idx_train * pair_cnt + 1, :], X_delta[idx_train, :])))
+        X_final_train.append(np.concatenate((X[idx_train * pair_cnt, :, :], X[idx_train * pair_cnt + 1, :, :], X_delta[idx_train, :, :]), 1))
+        # X_final_train.append([X[idx_train * pair_cnt, :, :], X[idx_train * pair_cnt + 1, :, :], X_delta[idx_train, :, :]])
         Y_final_train.append(Y_delta[idx_train])
 
     for idx_val in delta_rand_val:
-        X_final_val.append(np.concatenate((X[idx_val * pair_cnt, :], X[idx_val * pair_cnt + 1, :], X_delta[idx_val, :])))
+        X_final_val.append(np.concatenate((X[idx_val * pair_cnt, :, :], X[idx_val * pair_cnt + 1, :, :], X_delta[idx_val, :, :]), 1))
+        # X_final_val.append([X[idx_val * pair_cnt, :, :], X[idx_val * pair_cnt + 1, :, :], X_delta[idx_val, :, :]])
         Y_final_val.append(Y_delta[idx_val])
 
+    # Loss needs float tensor for 'target' and need double tensor for 'data'!
     X_final_train = np.array(X_final_train)
-    Y_final_train = np.array(Y_final_train)
+    Y_final_train = np.array(Y_final_train, dtype=np.float32)
     X_final_val = np.array(X_final_val)
-    Y_final_val = np.array(Y_final_val)
+    Y_final_val = np.array(Y_final_val, dtype=np.float32)
 
     return X_final_train, Y_final_train, X_final_val, Y_final_val
 
@@ -116,7 +117,11 @@ def prepare_trainval_data():
     # split data and combine features
     X_train, Y_train, X_val, Y_val = split_data(X, Y, X_delta, Y_delta)
 
+    # debug
+    print X_train.shape, Y_train.shape, X_val.shape, Y_val.shape
+
     return X_train, Y_train, X_val, Y_val
+
 
 def main():
     X, Y = import_data()
