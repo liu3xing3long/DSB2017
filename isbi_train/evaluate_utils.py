@@ -10,9 +10,7 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 
 
-def plot_auc(fpr, tpr, figure_idx=1):
-
-
+def plot_auc(fpr, tpr, roc_auc, figure_idx=1):
     # drawing
     plt.figure(num=figure_idx)
     lw = 2
