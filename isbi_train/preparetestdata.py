@@ -31,10 +31,12 @@ def _notice():
 
 
 #################################
-def process_delta_data(X, Y):
+def process_delta_data(X, Y, metaPhyD, metaPhySize):
     pair_len = len(X) / pair_cnt
     X_delta = []
     Y_delta = []
+    metaPhyD_delta = []
+    metaPhySize_delta = []
     for idx in range(pair_len):
         X_delta.append(X[idx * pair_cnt + 1, :] - X[idx * pair_cnt, :])
 
@@ -49,10 +51,15 @@ def process_delta_data(X, Y):
         else:
             Y_delta.append(imagepid)
 
+        metaPhyD_delta.append([metaPhyD[idx * pair_cnt], metaPhyD[idx * pair_cnt + 1]])
+        metaPhySize_delta.append([metaPhySize[idx * pair_cnt], metaPhySize[idx * pair_cnt + 1]])
+
     X_delta = np.array(X_delta)
     Y_delta = np.array(Y_delta)
+    metaPhyD_delta = np.array(metaPhyD_delta)
+    metaPhySize_delta = np.array(metaPhySize_delta)
 
-    return X_delta, Y_delta
+    return X_delta, Y_delta, metaPhyD_delta, metaPhySize_delta
 
 
 #################################
@@ -74,31 +81,38 @@ def split_data(X, Y, X_delta, Y_delta):
 def import_data():
     X = []
     Y = []
-    orig_labels = pd.read_csv(data_orig_label_csv)
+    metaPhyD = []
+    metaPhySize = []
 
+    orig_labels = pd.read_csv(data_orig_label_csv)
     for idx, item in orig_labels.iterrows():
         item_id = str(item["ID"])
         dat = np.load(os.path.join(dsb2017featfullpath, "{}_feat.npy".format(item_id)))
         X.append(dat)
         # Y.append(item["Type"])
         Y.append(item_id)
+        metaPhyD.append(item["PhyDiameter"])
+        metaPhySize.append(item["PhyVolume"])
 
     X = np.array(X)
     Y = np.array(Y)
+    metaPhyD = np.array(metaPhyD)
+    metaPhySize = np.array(metaPhySize)
 
-    return X, Y
+    return X, Y, metaPhyD, metaPhySize
 
 
 def prepare_test_data():
     # import data
-    X, Y = import_data()
+    X, Y, metaPhyD, metaPhySize = import_data()
     # process delta data
-    X_delta, Y_delta = process_delta_data(X, Y)
+    X_delta, Y_delta, PhyD_delta, PhySz_delta = process_delta_data(X, Y, metaPhyD, metaPhySize)
     # in testing, Y_delta contains the LabelName !!
+    # split_data actually DO NOT split data in test mode
     X_final, Y_final = split_data(X, Y, X_delta, Y_delta)
     # debug
-    print X_delta.shape, Y_delta.shape
-    return X_final, Y_final
+    print X_delta.shape, Y_delta.shape, PhyD_delta.shape, PhySz_delta.shape
+    return X_final, Y_final, PhyD_delta, PhySz_delta
 
 
 def main():

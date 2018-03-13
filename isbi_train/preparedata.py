@@ -115,7 +115,7 @@ def prepare_trainval_data():
     # process delta data
     X_delta, Y_delta = process_delta_data(X, Y)
     # split data and combine features
-    X_train, Y_train, X_val, Y_val = split_data(X, Y, X_delta, Y_delta)
+    X_train, Y_train, X_val, Y_val = split_data(X, Y, X_delta, Y_delta, 1)
 
     # debug
     print X_train.shape, Y_train.shape, X_val.shape, Y_val.shape

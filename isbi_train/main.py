@@ -55,14 +55,21 @@ class FCNet(nn.Module):
 
 
 class FCDataSet(Dataset):
-    def __init__(self, X, Y, phase="train"):
+    def __init__(self, X, Y, Diameter=None, Volume=None, phase="train"):
         self.X = X
         self.Y = Y
         self.phase = phase
 
+        if self.phase == "test":
+            self.Diameter = Diameter
+            self.Volume = Volume
+
     def __getitem__(self, idx):
         # note, in testing mode, the self.Y actully returns the label name
-        return self.X[idx, :], self.Y[idx]
+        if self.phase == "test":
+            return self.X[idx, :], self.Y[idx], self.Diameter[idx, :], self.Volume[idx, :]
+        else:
+            return self.X[idx, :], self.Y[idx]
 
     def __len__(self):
         # actually returns the 1st dim for X
@@ -358,8 +365,8 @@ def test(args):
 
         ##########################################
         # setting up data
-        X_test, D_name = prepare_test_data()
-        dataset = FCDataSet(X_test, D_name, phase='test')
+        X_test, D_name, PhyD, PhySz = prepare_test_data()
+        dataset = FCDataSet(X_test, D_name, PhyD, PhySz, phase='test')
 
         data_loader = DataLoader(
             dataset,
@@ -368,14 +375,19 @@ def test(args):
             num_workers=2,
             pin_memory=False)
         predlist = []
-        for i, (x, y_name) in enumerate(data_loader):
+
+        # NOTE, numpy returns 1x1 element instead of 1x element
+        for i, (x, y_name, dim, vol) in enumerate(data_loader):
             x = Variable(x).cuda()
             casePred, nodPred = net(x)
-            predlist.append([y_name, casePred.data.cpu().numpy()])
-        # 1001 1002 1003 ...
-        # 0.8  0.9  0.7  ...
-        predlist = np.concatenate(predlist, 1)
-        predlist = predlist.T
+            ###
+            # cols = ["ISBI-PID", "Cohort Label", "Nodule Size at time T1", "Nodule Size at time T2",
+            #         "Nodule volume at time T1", "Nodule volume at time T2", "Malignancy Probability",
+            #         "Descriptor-Type-Used", "DICOM UIDS at T1", "DICOM UIDs at T2", "Comments"]
+            ###
+            predlist.append([y_name[0], "TEST", dim[0][0], dim[0][1], vol[0][0], vol[0][1],
+                             casePred.data.cpu().numpy()[0],
+                             "N/A", "N/A", "N/A", "N/A"])
         return predlist
 
     else:
@@ -418,6 +430,13 @@ def main():
         train_val(args)
     else:
         predlist = test(args)
+
+        cols = ["ISBI-PID", "Cohort Label", "Nodule Size at time T1", "Nodule Size at time T2",
+                "Nodule volume at time T1", "Nodule volume at time T2", "Malignancy Probability",
+                "Descriptor-Type-Used", "DICOM UIDS at T1", "DICOM UIDs at T2",  "Comments"]
+
+        df = pd.DataFrame(predlist, columns=cols)
+        df.to_csv("./submission.csv", index=False)
 
 
 if __name__ == "__main__":

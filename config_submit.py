@@ -1,4 +1,4 @@
-config = {'datapath':'/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess/rawdata/',
+config = {'datapath':'/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess_test/rawdata/',
           'preprocess_result_path':'./prep_result/',
           'outputfile':'./prediction.csv',
           

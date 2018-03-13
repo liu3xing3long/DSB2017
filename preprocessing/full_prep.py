@@ -84,8 +84,6 @@ def savenpy(id,filelist,prep_folder,data_path,use_existing=True):
 
         np.save(os.path.join(prep_folder, name+'_bbox'),extendbox)
         
-        return 
-
         convex_mask = m1
         dm1 = process_mask(m1)
         dm2 = process_mask(m2)

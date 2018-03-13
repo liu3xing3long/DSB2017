@@ -32,7 +32,7 @@ def main():
     label_csv = pd.read_csv(isbi_csv_file)
     target_spacing = [1.0, 1.0, 1.0]
 
-    for label_piece in label_csv.iterrows():
+    for idx, label_piece in label_csv.iterrows():
         _notice()
 
         imagename = label_piece["ID"]

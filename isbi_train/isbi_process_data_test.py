@@ -32,7 +32,7 @@ def main():
     label_csv = pd.read_csv(isbi_csv_file)
     target_spacing = [1.0, 1.0, 1.0]
 
-    for label_piece in label_csv.iterrows():
+    for idx, label_piece in label_csv.iterrows():
         _notice()
 
         imagename = label_piece["ID"]
@@ -87,11 +87,11 @@ def main():
 
         target_size = pow((3 * float(orig_voxels) / (4.0 * np.pi)), 1.0 / 3) * np.max(orig_spacing / target_spacing)
         debugmsg( "final target size {}".format(target_size) )
-
         # sitk.Show(target_processed_image)
         ##########################################
         # also flipped!!!
         ##########################################
+
         target_pbb = np.array([[1.0, final_voxel_centroid[2], final_voxel_centroid[1], final_voxel_centroid[0], target_size]])
         target_bbox_name = os.path.join(bbox_folder, bbox_id)
 
