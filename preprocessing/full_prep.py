@@ -38,14 +38,17 @@ def lumTrans(img):
     newimg = (newimg*255).astype('uint8')
     return newimg
 
-def resample(imgs, spacing, new_spacing,order = 2):
+def resample(imgs, spacing, new_spacing,order=2):
     if len(imgs.shape)==3:
-        new_shape = np.round(imgs.shape * spacing / new_spacing)
-        true_spacing = spacing * imgs.shape / new_shape
-        resize_factor = new_shape / imgs.shape
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            imgs = zoom(imgs, resize_factor, mode = 'nearest',order=order)
+        spacing = np.asarray(spacing)
+        shape = np.asarray(imgs.shape)
+        new_shape = np.round(shape * spacing / new_spacing)
+
+        print "shape: {} -> {}, spacing: {} -> {}".format(shape, new_shape, spacing, new_spacing)
+
+        true_spacing = spacing * shape / new_shape
+        resize_factor = new_shape / shape
+        imgs = zoom(imgs, resize_factor, mode = 'nearest',order=order)
         return imgs, true_spacing
     elif len(imgs.shape)==4:
         n = imgs.shape[-1]
@@ -79,8 +82,8 @@ def savenpy(id,filelist,prep_folder,data_path,use_existing=True):
         extendbox = np.vstack([np.max([[0,0,0],box[:,0]-margin],0),np.min([newshape,box[:,1]+2*margin],axis=0).T]).T
         extendbox = extendbox.astype('int')
 
-
-
+        np.save(os.path.join(prep_folder, name+'_bbox'),extendbox)
+        
         convex_mask = m1
         dm1 = process_mask(m1)
         dm2 = process_mask(m2)
@@ -89,13 +92,21 @@ def savenpy(id,filelist,prep_folder,data_path,use_existing=True):
         extramask = dilatedMask ^ Mask
         bone_thresh = 210
         pad_value = 170
+        
+        print "mask done!"
 
         im[np.isnan(im)]=-2000
         sliceim = lumTrans(im)
+
+        print "lung trans done!"
+
         sliceim = sliceim*dilatedMask+pad_value*(1-dilatedMask).astype('uint8')
         bones = sliceim*extramask>bone_thresh
         sliceim[bones] = pad_value
+        print "resapling ..."
         sliceim1,_ = resample(sliceim,spacing,resolution,order=1)
+        print "resample done!"
+
         sliceim2 = sliceim1[extendbox[0,0]:extendbox[0,1],
                     extendbox[1,0]:extendbox[1,1],
                     extendbox[2,0]:extendbox[2,1]]
