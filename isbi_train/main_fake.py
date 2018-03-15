@@ -13,7 +13,7 @@ import numpy as np
 import time
 import os
 import pandas as pd
-from preparedata import prepare_trainval_data
+from preparedata_fake import prepare_trainval_data
 from preparetestdata import prepare_test_data
 import argparse
 from evaluate_utils import plot_auc, calculate_auc
@@ -33,7 +33,7 @@ class FCNet(nn.Module):
         self.fc1 = nn.Linear(128, 64)
         self.fc2 = nn.Linear(64, 1)
         self.pool = nn.MaxPool1d(kernel_size=3)
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(0.7)
         self.baseline = nn.Parameter(torch.Tensor([-30.0]).float())
         self.Relu = nn.ReLU()
 

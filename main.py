@@ -110,9 +110,8 @@ def test_casenet(model,testset):
 config2['bboxpath'] = bbox_result_path
 config2['datadir'] = prep_result_path
 
-
-
 dataset = DataBowl3Classifier(testsplit, config2, phase = 'test')
 predlist = test_casenet(casenet,dataset).T
 df = pandas.DataFrame(data={'id':testsplit, 'cancer':predlist})
+df = df.sort_values(by="id")
 df.to_csv(filename,index=False)

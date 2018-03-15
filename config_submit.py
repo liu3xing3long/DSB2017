@@ -1,6 +1,6 @@
 config = {'datapath':'/mnt/lustre/liuxinglong/data/ISBI/isbi_preprocess_test/rawdata/',
           'preprocess_result_path':'./prep_result/',
-          'outputfile':'./prediction.csv',
+          'outputfile':'./prediction_test.csv',
           
           'detector_model':'net_detector',
          'detector_param':'./model/detector.ckpt',
