@@ -61,7 +61,7 @@ def evaluate_metastasis(label_csv):
         # 2 * pow(base_radius + diag_radius, 2)
 
         _notice()
-        threshold_d = 100
+        threshold_d = 150
         if delta > threshold_d * threshold_d:
             print ("data {} -> {} out of range, centroid {} -> {}, with radius {} -> {}, total delta {}".format(
                 base_id, diag_id, base_centroid, diag_centroid, base_radius, diag_radius, delta))
