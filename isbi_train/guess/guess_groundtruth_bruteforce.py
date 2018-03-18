@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time    : 18-3-14 下午2:44
+# @Time    : 18-3-18 上午11:28
 # @Author  : liuxinglong
-# @File    : guess_groundtruth.py
+# @File    : guess_groundtruth_bruteforce.py
 # @Description: blabla
 
 import os
@@ -35,10 +35,8 @@ TARGET_ROC3 = 0.8636734694
 Logger = None
 SIMILAR_THRESHOLD = 1e-4
 
-# TH_H = 0.95
-# TH_L = 0.05
 TH_H = 0.95
-TH_L = 0.05
+TH_L = 0.1
 
 def test_data():
     X1 = []
@@ -79,6 +77,38 @@ def brgd(n):
     return L
 
 
+# /**
+#      * 非递归生成二进制格雷码
+#      * 思路:1、获得n-1位生成格雷码的数组
+#      *      2、由于n位生成的格雷码位数是n-1的两倍，故只要在n为格雷码的前半部分加0，后半部分加1即可。
+#      * @param n 格雷码的位数
+#      * @return 生成的格雷码数组
+#      */
+def GrayCode2(n):
+    num = pow(2, n) #//根据输入的整数，计算出此Gray序列大小
+    s1 = ["0","1"]#//第一个Gray序列
+
+    if n < 1:
+        print ("你输入的格雷码位数有误！");
+
+    for i in range(2, n+1):
+    # for(int i=2;i<=n;i++){//循环根据第一个Gray序列，来一个一个的求
+        p = pow(2, i); #//到了第几个的时候，来计算出此Gray序列大小
+        # String[] si = new String[p];
+        si = ["0"] * p
+        # for(int j=0;j<p;j++){//循环根据某个Gray序列，来一个一个的求此序列
+        for j in range(p):
+            if j< p/2:
+                si[j] = "0" + s1[j] #//原始序列前面加上"0"
+            else:
+                si[j] = "1" + s1[p-j-1]#//原始序列反序，前面加上"1"
+        s1 = si#//把求得的si，附给s1,以便求下一个Gray序列
+
+    return s1
+
+
+
+
 def guess(id, data, guess_index, X1, X2, X3, Y):
     global Logger
     try:
@@ -87,10 +117,6 @@ def guess(id, data, guess_index, X1, X2, X3, Y):
         Logger.error("Eval Exception {}".format(e.message))
 
     Y[guess_index] = test_array
-
-    if (np.any(Y == -1)):
-        Logger.erorr("id {}, Y fix failed".format(id))
-        return
 
     fpr, tpr, _ = metrics.roc_curve(Y, X1)
     roc_auc1 = metrics.auc(fpr, tpr)
@@ -169,14 +195,14 @@ def main():
     #########################################################
     tp_idx, fp_idx, candi_idx, Ybase = test_data()
 
+
     #########################################################
     X1, X2, X3 = import_data()
 
     #########################################################
     guess_length = len(candi_idx)
-    print "guess length {}".format(guess_length)
-
     dat = brgd(guess_length)
+
     similar_test_times = 3
     global SIMILAR_THRESHOLD
     for i_test_time in range(similar_test_times):
@@ -184,7 +210,7 @@ def main():
 
         use_pool = False
         if use_pool == True:
-            n_worker = 16
+            n_worker = 32
             pool = Pool(n_worker)
             partial_guess = partial(guess, data=dat, guess_index=candi_idx, X1=X1, X2=X2, X3=X3, Y=Ybase)
 
@@ -209,4 +235,23 @@ def main():
 if __name__ == '__main__':
     main()
     # test_data()
+
+    # GrayCode2(50)
+
+    # print "cal done!"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

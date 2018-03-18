@@ -15,29 +15,30 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 import copy
 import logging
-from tqdm import tqdm
+# from tqdm import tqdm
 from multiprocessing import Pool
 from functools import partial
 from  evaluate_utils import plot_auc
 
 submission_file1 = "./fixed_submission.csv"
-# submission_file1 = "./submission_manual.csv"
 submission_file2 = "./rad_submission.csv"
 submission_file3 = "./dsb2nd_submission.csv"
 
+submission_file4 = "./submission_handcraft.csv"
+
 THRE = 0.1
 DATA_LENGTH = 70
-TARGET_ROC1 = 0.8702040816
+TARGET_ROC1 = 0.8726530612
 TARGET_ROC2 = 0.7967346939
 TARGET_ROC3 = 0.8636734694
 
 Logger = None
 SIMILAR_THRESHOLD = 1e-7
 
+
 def test_data():
     X1 = []
     data = pd.read_csv(submission_file1)
-
     for idx, data_piece in data.iterrows():
         X1.append(data_piece["Malignancy Probability"])
     X1 = np.array(X1)
@@ -51,8 +52,6 @@ def test_data():
 
     X1[X1 > 0.8] = 1
     X1[X1 < 0.2] = 0
-
-    print X1
 
     return candi_idx
 
@@ -127,11 +126,9 @@ def import_data():
     ################################################
     # data 1
     X1 = []
-    Y = []
     data = pd.read_csv(submission_file1)
     for idx, data_piece in data.iterrows():
         X1.append(data_piece["Malignancy Probability"])
-        Y.append(data_piece["Cohort Label"])
     X1 = np.array(X1)
 
     ################################################
@@ -151,6 +148,11 @@ def import_data():
     X3 = np.array(X3)
 
     ################################################
+    Y = []
+    data = pd.read_csv(submission_file4)
+    for idx, data_piece in data.iterrows():
+        Y.append(data_piece["Malignancy Probability"])
+    Y = np.array(Y)
     # Y = [1, 1, 1, 1, 1, 1, 0, 0, 1, 0,
     #      0, 0, 1, 0, 1, 0, 0, 0, 0, 1,
     #      0, 1, 0, 0, 1, 0, 0, 0, 1, 0,
@@ -158,8 +160,6 @@ def import_data():
     #      0, 0, 1, 0, 1, 0, 1, 0, 0, 0,
     #      1, 1, 1, 0, 0, 0, 0, 0, 0, 1,
     #      1, 0, 1, 1, 1, 0, 1, 0, 0, 1]
-
-
     return X1, X2, X3, Y
 
 
@@ -202,6 +202,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    test_data()
+    main()
+    # test_data()
 
