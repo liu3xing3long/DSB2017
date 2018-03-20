@@ -13,7 +13,7 @@ import numpy as np
 import time
 import os
 import pandas as pd
-from preparedata_fake import prepare_trainval_data
+from preparedata_multiple_fake import prepare_trainval_data
 from preparetestdata import prepare_test_data
 import argparse
 from evaluate_utils import plot_auc, calculate_auc
@@ -33,7 +33,7 @@ class FCNet(nn.Module):
         self.fc1 = nn.Linear(128, 64)
         self.fc2 = nn.Linear(64, 1)
         self.pool = nn.MaxPool1d(kernel_size=3)
-        self.dropout = nn.Dropout(0.7)
+        self.dropout = nn.Dropout(0.5)
         self.baseline = nn.Parameter(torch.Tensor([-30.0]).float())
         self.Relu = nn.ReLU()
 
@@ -99,12 +99,13 @@ class FocalLoss(nn.Module):
 
 
 class FCLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, weight=None):
         super(FCLoss, self).__init__()
         self.num_hard = 0
         self.sigmoid = nn.Sigmoid()
-        self.classify_loss = nn.BCELoss()
-        self.regress_loss = nn.SmoothL1Loss()
+        # self.classify_loss = nn.BCELoss()
+        # self.regress_loss = nn.SmoothL1Loss()
+        self.weight = weight
 
     def forward(self, output, labels, train=True):
         batch_size = labels.size(0)
@@ -123,18 +124,28 @@ class FCLoss(nn.Module):
         if len(pos_output) > 0:
             # pos_prob = self.sigmoid(pos_output)
             pos_prob = pos_output
+            classify_func_pos = nn.BCELoss(weight=Variable(torch.FloatTensor([self.weight[1]] * len(pos_output))).cuda())
 
             if len(neg_output) > 0:
                 # neg_prob = self.sigmoid(neg_output)
                 neg_prob = neg_output
-                classify_loss = 0.5 * self.classify_loss(
-                    pos_prob, pos_labels) + 0.5 * self.classify_loss(
+                classify_func_neg = nn.BCELoss(weight=Variable(torch.FloatTensor([self.weight[0]] * len(neg_output))).cuda())
+
+                # classify_loss = 0.5 * self.classify_loss(
+                #     pos_prob, pos_labels) + 0.5 * self.classify_loss(
+                #     neg_prob, neg_labels)
+                classify_loss = 0.5 * classify_func_pos(
+                    pos_prob, pos_labels) + 0.5 * classify_func_neg(
                     neg_prob, neg_labels)
+
                 neg_correct = (neg_prob.data < 0.5).sum()
                 neg_total = len(neg_prob)
             else:
-                classify_loss = 0.5 * self.classify_loss(
+                # classify_loss = 0.5 * self.classify_loss(
+                #     pos_prob, pos_labels)
+                classify_loss = 0.5 * classify_func_pos(
                     pos_prob, pos_labels)
+
                 neg_correct = 0
                 neg_total = 0
 
@@ -144,9 +155,13 @@ class FCLoss(nn.Module):
             if len(neg_output) > 0:
                 # neg_prob = self.sigmoid(neg_output)
                 neg_prob = neg_output
+                classify_func_neg = nn.BCELoss(weight=Variable(torch.FloatTensor([self.weight[0]] * len(neg_output))).cuda())
 
-                classify_loss = 0.5 * self.classify_loss(
+                # classify_loss = 0.5 * self.classify_loss(
+                #     neg_prob, neg_labels)
+                classify_loss = 0.5 * classify_func_neg(
                     neg_prob, neg_labels)
+
                 neg_correct = (neg_prob.data < 0.5).sum()
                 neg_total = len(neg_prob)
             else:
@@ -197,7 +212,6 @@ def FCTrain(data_loader, net, loss, epoch, optimizer, get_lr):
     end_time = time.time()
 
     return loss_epoch, float(pos_c_epoch) / pos_t_epoch, float(neg_c_epoch) / neg_t_epoch, auc
-
 
 
 def FCValidate(data_loader, net, loss):
@@ -257,7 +271,19 @@ def train_val(args):
 
     ################################################
     net = FCNet()
-    loss = FCLoss()
+
+    train_neg_count = len(Y_train[Y_train == 0])
+    train_pos_count = len(Y_train[Y_train == 1])
+    neg_ratio = train_neg_count / float(train_neg_count + train_pos_count)
+    pos_ratio = train_pos_count / float(train_pos_count + train_neg_count)
+
+    # train_weight = np.zeros(len(Y_train))
+    # train_weight[Y_train == 0] = neg_ratio
+    # train_weight[Y_train == 1] = pos_ratio
+    # train_weight = [train_neg_count, train_pos_count]
+    # train_weight = [train_pos_count, train_neg_count]
+    train_weight = [pos_ratio, neg_ratio]
+    loss = FCLoss(weight=train_weight)
 
     if args.gpus is None:
         args.gpus = [0]
@@ -441,11 +467,11 @@ def main():
                 "Descriptor-Type-Used", "DICOM UIDS at T1", "DICOM UIDs at T2",  "Comments"]
 
         df = pd.DataFrame(predlist, columns=cols)
-        df.to_csv("./submission_fake.csv", index=False)
+        df.to_csv("./submission_multiple_fake.csv", index=False)
 
         cols = ["ID", "Malignancy"]
         df = pd.DataFrame(purelist, columns=cols)
-        df.to_csv("./isbi_submission_fake.csv", index=False)
+        df.to_csv("./isbi_submission_multiple_fake.csv", index=False)
 
 
 if __name__ == "__main__":

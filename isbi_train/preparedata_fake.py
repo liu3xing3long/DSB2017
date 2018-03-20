@@ -89,6 +89,7 @@ def split_data(X, Y, X_delta, Y_delta, valcount=3):
 
     print X.shape, Y.shape
     print X_delta.shape, Y_delta.shape
+    print ("Neg {}, Pos {}".format(len(delta_Negatives), len(delta_Positives)))
 
     for idx_train in delta_rand_train:
         X_final_train.append(np.concatenate((X[idx_train * pair_cnt, :, :], X[idx_train * pair_cnt + 1, :, :], X_delta[idx_train, :, :]), 1))
@@ -118,7 +119,7 @@ def prepare_trainval_data():
     X_train, Y_train, X_val, Y_val = split_data(X, Y, X_delta, Y_delta, 1)
 
     # debug
-    print X_train.shape, Y_train.shape, X_val.shape, Y_val.shape
+    # print X_train.shape, Y_train.shape, X_val.shape, Y_val.shape
 
     return X_train, Y_train, X_val, Y_val
 

@@ -1,5 +1,6 @@
 from preprocessing import full_prep
-from config_submit import config as config_submit
+# from config_submit_multiple import config as config_submit
+from config_submit_yizhong import config as config_submit
 
 import torch
 from torch.nn import DataParallel
@@ -22,7 +23,7 @@ datapath = config_submit['datapath']
 prep_result_path = config_submit['preprocess_result_path']
 skip_prep = config_submit['skip_preprocessing']
 skip_detect = config_submit['skip_detect']
-bbox_result_path = './bbox_result'
+bbox_result_path = config_submit['bbox_path']
 feature_path = config_submit['feature_path']
 
 if not skip_prep:

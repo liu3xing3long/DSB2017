@@ -22,8 +22,10 @@ import os
 ##################################
 # dsb2017featfullpath = "/mnt/lustre/liuxinglong/work/DSB2017/features"
 dsb2017featfullpath = "../features"
-data_orig_label_csv = "./data/labels_isbi.csv"
+dsb2017featfullpath_candi = "../features_multiple"
+data_orig_label_csv = "./data/labels_isbi_multiple_fake.csv"
 pair_cnt = 2
+
 
 ##################################
 def _notice():
@@ -52,7 +54,14 @@ def import_data():
 
     for idx, item in orig_labels.iterrows():
         item_id = str(item["ID"])
-        dat = np.load(os.path.join(dsb2017featfullpath, "{}_feat.npy".format(item_id)))
+
+        data_path = os.path.join(dsb2017featfullpath, "{}_feat.npy".format(item_id))
+        if os.path.isfile(data_path):
+            dat = np.load(data_path)
+        else:
+            data_path = os.path.join(dsb2017featfullpath_candi, "{}_feat.npy".format(item_id))
+            dat = np.load(data_path)
+
         X.append(dat)
         Y.append(item["Type"])
 
@@ -125,8 +134,7 @@ def prepare_trainval_data():
 
 
 def main():
-    X, Y = import_data()
-    print "X shape {}, Y shape {}".format(X.shape, Y.shape)
+    prepare_trainval_data()
 
 
 if __name__ == "__main__":

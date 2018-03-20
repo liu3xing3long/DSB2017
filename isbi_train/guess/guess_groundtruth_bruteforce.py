@@ -57,7 +57,22 @@ def test_data():
     X1[fp_idx] = 0
     X1[candi_idx] = -1 # for debug
 
-    return tp_idx[0], fp_idx[0], candi_idx[0], X1
+    Ybase =[
+        0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
+        1, 0, 1, 0, 1, 0, 0, 0, 1, 1,
+        1, 1, 0, 0, 1, 0, 0, 0, 0, 0,
+        1, 1, 0, 1, 1, 0, 1, 1, 0, 1,
+        0, 0, 1, 0, 1, 0, 1, 0, 0, 0,
+        1, 1, 1, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 1, 0, 1, 0, 1, 0, 0, 1]
+    Ybase = np.array(Ybase)
+    candi_idx = [40, 55, 56, 67]
+    candi_idx = np.array(candi_idx)
+
+    Ybase[candi_idx] = -1
+
+    # return tp_idx[0], fp_idx[0], candi_idx[0], X1
+    return tp_idx[0], fp_idx[0], candi_idx[0], Ybase
 
 
 def brgd(n):
@@ -127,6 +142,8 @@ def guess(id, data, guess_index, X1, X2, X3, Y):
     fpr, tpr, _ = metrics.roc_curve(Y, X3)
     roc_auc3 = metrics.auc(fpr, tpr)
 
+    print roc_auc1, roc_auc2, roc_auc3
+
     if abs(roc_auc1 - TARGET_ROC1) < SIMILAR_THRESHOLD and \
         abs(roc_auc2 - TARGET_ROC2) < SIMILAR_THRESHOLD and \
         abs(roc_auc3 - TARGET_ROC3) < SIMILAR_THRESHOLD:
@@ -195,7 +212,8 @@ def main():
     #########################################################
     tp_idx, fp_idx, candi_idx, Ybase = test_data()
 
-
+    candi_idx = [40, 55, 56, 67]
+    candi_idx = np.array(candi_idx)
     #########################################################
     X1, X2, X3 = import_data()
 

@@ -8,12 +8,17 @@ import os
 import numpy as np
 import pandas as pd
 
-THRE_H = 0.9
-THRE_L = 0.1
+THRE_H = 0.99
+THRE_L = 0.01
 
-src_test= "./fixed_submission_forfakeselection.csv"
-src_train = "./labels_isbi.csv"
-target = "./labels_isbi_fake.csv"
+# src_test= "./fixed_submission_forfakeselection.csv"
+src_test= "./submission_multiple.csv"
+
+# src_train = "./labels_isbi.csv"
+# target = "./labels_isbi_fake.csv"
+
+src_train = "./labels_isbi_multiple.csv"
+target = "./labels_isbi_multiple_fake.csv"
 
 pd_train = pd.read_csv(src_train)
 pd_test = pd.read_csv(src_test)
@@ -33,15 +38,15 @@ for idx, dat_row in pd_train.iterrows():
 fake_pos = 0
 for idx, dat_row in pd_test_h.iterrows():
     pid = dat_row["ISBI-PID"]
-    dat_target.append(["{}_{}".format(pid, basetime), 0, 0, [], 0, 0, 0])
-    dat_target.append(["{}_{}".format(pid, diagtime), 1, 0, [], 0, 0, 0])
+    dat_target.append(["{}_{}".format(pid, basetime), 0, 0, 0, 0, 0, 0])
+    dat_target.append(["{}_{}".format(pid, diagtime), 1, 0, 0, 0, 0, 0])
     fake_pos += 1
 
 fake_neg = 0
 for idx, dat_row in pd_test_l.iterrows():
     pid = dat_row["ISBI-PID"]
-    dat_target.append(["{}_{}".format(pid, basetime), 0, 0, [], 0, 0, 0])
-    dat_target.append(["{}_{}".format(pid, diagtime), 0, 0, [], 0, 0, 0])
+    dat_target.append(["{}_{}".format(pid, basetime), 0, 0, 0, 0, 0, 0])
+    dat_target.append(["{}_{}".format(pid, diagtime), 0, 0, 0, 0, 0, 0])
     fake_neg += 1
 
 print "adding Neg {}, Pos {}".format(fake_pos, fake_neg)
